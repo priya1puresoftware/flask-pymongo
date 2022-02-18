@@ -1,0 +1,54 @@
+name: Test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - 'ubuntu-20.04'
+        python-version:
+          - '3.8'
+        arch:
+          - 'x86_64'
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+        
+    - name: Install Dependencies
+      run: |
+        sudo python -m pip install --upgrade pip 
+        pip install tox
+        tox -e style
+        
+    - name: test      
+      run: |
+        pip install wheel
+        pip install tox tox-docker
+        tox
+  armv64_job:
+    name: Build and Test for arm64
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up QEMU
+        id: qemu
+        uses: docker/setup-qemu-action@v1
+      - name: Install and Run tests
+        run: |
+           docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+             arm64v8/ubuntu:20.04 \
+              bash -exc 'apt-get update && apt-get -y install git python3 python3-pip && \
+              python3 -m pip install --upgrade pip && \
+              pip3 install tox && \
+              tox -e style && \
+              pip3 install wheel && \
+              pip3 install tox tox-docker && \
+              tox && \
+              deactivate'
