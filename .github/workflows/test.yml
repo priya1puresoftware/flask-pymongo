@@ -50,5 +50,5 @@ jobs:
               tox -e style && \
               pip3 install wheel && \
               pip3 install tox tox-docker && \
-              tox && \
+              tox -e py38 && \
               deactivate'
